@@ -13,6 +13,8 @@
  */
 function justgiving_wf_admin() {
   $nodes = node_load_multiple(array(), array('type' => 'webform'));
+  // Quick fix for live site which uses registration_form type for most webforms.
+  $nodes = array_merge($nodes, node_load_multiple(array() , array('type' => 'registration_form')));
   $forms = array('' => 'None');
   if($nodes && !empty($nodes)){
     foreach ($nodes as $node) {
