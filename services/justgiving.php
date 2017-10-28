@@ -63,11 +63,7 @@ class JustGiving {
       'charity-id' => variable_get('justgiving_charity_id'),
       'api-key' => variable_get('justgiving_api_key'),
       'environment' => variable_get('justgiving_environment'),
-      'suggestions' => variable_get('justgiving_suggestions_choice')
     );
-    if($this->settings['suggestions'] == 'custom'){
-      $this->settings['suggestions-custom'] = variable_get('justgiving_suggestions_choice_custom');
-    }
     $this->forms = array(
       'account' => variable_get('justgiving_node_account_form'),
       'page' => variable_get('justgiving_node_page_form'),

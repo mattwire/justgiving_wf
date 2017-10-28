@@ -62,27 +62,6 @@ function justgiving_wf_admin() {
         '#options' => $forms,
         ),
       ),
-      'justgiving_suggestions_fieldset' => array(
-        '#type' => 'fieldset',
-        '#title' => 'URL Suggestions',
-        '#collapsible' => TRUE,
-        '#collapsed'  => TRUE,
-        'justgiving_suggestions_choice' => array(
-          '#type' => 'radios',
-          '#title' => '',
-          '#default_value' => variable_get('justgiving_suggestions_choice'),
-          '#options' => array(
-              'default' => 'JustGiving Default Suggestions',
-              'custom' => 'Custom Suggestion',
-            ),
-          ),
-        'justgiving_suggestions_choice_custom' => array(
-          '#type' => 'textfield',
-          '#title' => '',
-          '#default_value' => variable_get('justgiving_suggestions_choice_custom'),
-          '#description' => 'Pattern will be FIRST_NAME-YOUR_CUSTOM_SUGGESTION',
-        ),
-      ),
     );
   return system_settings_form($form);
 }
