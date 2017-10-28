@@ -16,11 +16,8 @@ function justgiving_wf_admin() {
   $forms = array('' => 'None');
   if($nodes && !empty($nodes)){
     foreach ($nodes as $node) {
-      $forms[$node->nid] = $node->title;
-      if($node->webform['components'] && !empty($node->webform['components'])){
-        foreach($node->webform['components'] as $component){
-          $fields[$node->nid][$component['form_key']] = $component['name'];
-        }
+      if ($node->type === 'webform') {
+        $forms[$node->nid] = $node->title;
       }
     }
   }
