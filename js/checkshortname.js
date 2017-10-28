@@ -25,16 +25,20 @@
     var jgLastName = $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-last-name');
     var webformSubmit = $('.webform-submit');
     // Check elements are defined
-    if (!jgShortName.length || !jgFirstName.length || !jgLastName.length) {
+    if (!jgShortName.length) {
       return
     }
+
     webformSubmit.attr('disabled', true);
     var submitText = webformSubmit.text();
     webformSubmit.html('Wait...');
 
-    if (!jgShortName.val().length && jgFirstName.val().length && jgLastName.val().length) {
-      var shortName = jgFirstName.val() + jgLastName.val();
-      jgShortName.val(shortName);
+    // Check elements are defined
+    if (jgFirstName.length && jgLastName.length) {
+      if (!jgShortName.val().length && jgFirstName.val().length && jgLastName.val().length) {
+        var shortName = jgFirstName.val() + jgLastName.val();
+        jgShortName.val(shortName);
+      }
     }
     checkJGShortName();
     webformSubmit.html(submitText);
