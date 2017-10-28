@@ -1,0 +1,373 @@
+<?php
+/**
+ * @file
+ * JustGiving Integration module
+ *
+ * @global: $_justgiving_helper
+ */
+
+// We have to load the libraries module if it doesn't exist.
+if (!function_exists('libraries_load')) {
+  module_load_include('module', 'libraries');
+}
+
+require_once('services/justgiving.php');
+
+function justgiving_wf_get_jg_helper() {
+  $jg_lib_path = function_exists('libraries_get_path') ? libraries_get_path('justgiving') : 'sites/all/libraries/justgiving';
+  $jg_platform = $jg_lib_path . '/JustGivingClient.php';
+
+  require_once($jg_platform);
+
+  // Create our helper global.
+  global $_justgiving_helper;
+  if (empty($_justgiving_helper)) {
+    $_justgiving_helper = new JustGiving();
+  }
+}
+
+/**
+ * Implements hook_libraries_info().
+ *
+ * For defining external JG SDK.
+ */
+function justgiving_wf_libraries_info() {
+  $libraries['justgiving'] = array(
+    'name' => 'The Just Giving PHP SDK',
+    'vendor url' => 'http://example.com/simple',
+    'download url' => 'http://example.com/simple',
+    'version' => '1.0',
+    'version arguments' => array(
+      'file' => 'JustGivingClient.php',
+      'pattern' => '/Version (\d+)/',
+      'lines' => 5,
+    ),
+    'files' => array('php' => array(
+        'JustGivingClient.php',
+        'ApiClients/Model/CreateAccountRequest.php',
+        'ApiClients/Model/RegisterPageRequest.php',
+      ), ),
+  );
+  return $libraries;
+}
+
+function justgiving_wf_registry_files_alter(&$files, $modules) {
+  if (!class_exists('JustGivingClient')) {
+    $library_path = function_exists('libraries_get_path') ? libraries_get_path('justgiving') : 'sites/all/libraries/justgiving';
+    $files[$library_path . '/JustGivingClient.php'] = array(
+      'module' => 'justgiving',
+      'weight' => 0,
+    );
+    $files[$library_path . '/ApiClients/Model/CreateAccountRequest.php'] = array(
+      'module' => 'justgiving',
+      'weight' => 1,
+    );
+    $files[$library_path . '/ApiClients/Model/RegisterPageRequest.php'] = array(
+      'module' => 'justgiving',
+      'weight' => 2,
+    );
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function justgiving_wf_menu() {
+  $items['admin/config/services/justgiving'] = array(
+    'title' => 'JustGiving',
+    'description' => 'Just Giving integration options',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('justgiving_wf_admin'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'justgiving_wf.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function justgiving_wf_form_alter(&$form, &$form_state, $form_id) {
+  global $_justgiving_helper;
+  justgiving_wf_get_jg_helper();
+
+  switch ($form_id) {
+    case "webform_client_form_{$_justgiving_helper->forms['page']}":
+      drupal_add_js(drupal_get_path('module', 'justgiving_wf') . '/js/checkshortname.js');
+      $form['#validate'][] = 'justgiving_wf_form_validate'; //function name
+      break;
+  }
+}
+
+/**
+ * Implements hook_webform_validation_validators().
+ *
+ * Add our custom validator for the JG url check
+ */
+function justgiving_wf_webform_validation_validators() {
+  return array(
+    'validate_jg_url' => array(
+      'name' => 'Just Giving pageShortName (URL) check',
+      'component_types' => array('textfield'),
+    ),
+    'validate_jg_email' => array(
+      'name' => 'Just Giving Email Check',
+      'component_types' => array(
+        'email',
+        'textfield',
+      ),
+    ),
+    'validate_jg_password' => array(
+      'name' => 'Just Giving Password Check',
+      'component_types' => array(
+        'textfield',
+        'password',
+      ),
+    ),
+  );
+}
+
+function _justgiving_wf_getSubmittedValue($name, $form, $form_state) {
+  if (empty($form_state['values']['submitted'])) {
+    return NULL;
+  }
+  $submitted = $form_state['values']['submitted'];
+  switch ($name) {
+    case 'jg_createaccount':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1];
+      break;
+    case 'jg_email':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'];
+      break;
+    case 'jg_password':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_password'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_password'];
+      break;
+    case 'jg_prefix':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_prefix_id'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_prefix_id'];
+      break;
+    case 'jg_firstname':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_first_name'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_first_name'];
+      break;
+    case 'jg_lastname':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_last_name'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_last_name'];
+      break;
+    case 'jg_address1':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_street_address'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_street_address'];
+      break;
+    case 'jg_city':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_city'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_city'];
+      break;
+    case 'jg_postcode':
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_postal_code'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_postal_code'];
+      break;
+  }
+}
+
+function _justgiving_wf_setSubmittedValue($name, $value, $form, &$form_state) {
+  if (empty($form_state['values']['submitted'])) {
+    return NULL;
+  }
+  $submitted = &$form_state['values']['submitted'];
+  switch ($name) {
+    case 'jg_createaccount':
+      $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1] = $value;
+      break;
+  }
+}
+
+function _justgiving_wf_getFieldName($name) {
+  switch ($name) {
+    case 'jg_createaccount':
+      return 'submitted][civicrm_1_contact_1_fieldset_fieldset][jg_createaccount';
+    case 'jg_email':
+      return 'submitted][civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_email_email';
+    case 'jg_password':
+      return 'submitted][civicrm_1_contact_1_fieldset_fieldset][jg_password';
+    case 'jg_prefix':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_contact_prefix_id';
+    case 'jg_firstname':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_contact_first_name';
+    case 'jg_lastname':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_contact_last_name';
+    case 'jg_address1':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_address_street_address';
+    case 'jg_city':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_address_city';
+    case 'jg_postcode':
+      return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_address_postal_code';
+    default:
+      return NULL;
+  }
+}
+
+function justgiving_wf_form_validate($form, &$form_state) {
+  global $_justgiving_helper;
+  justgiving_wf_get_jg_helper();
+
+  civicrm_initialize();
+
+  $formId = $form['#form_id'];
+  $errors = FALSE;
+  switch ($formId) {
+    case "webform_client_form_{$_justgiving_helper->forms['page']}":
+      // Validate justgiving account details
+      $email = _justgiving_wf_getSubmittedValue('jg_email', $form ,$form_state);
+      $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
+      $createAccount = _justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state);
+      // Check if account is registered, and if we requested to create account
+      if ($createAccount && $emailRegistered) {
+        $errors[_justgiving_wf_getFieldName('jg_email')] = t('%d is already registered with JustGiving', array('%d' => $email));
+      }
+      elseif (!$createAccount && !$emailRegistered) {
+        // Can't find account
+        $errors[_justgiving_wf_getFieldName('jg_email')] = t('%d is not registered with JustGiving', array('%d' => $email));
+      }
+      elseif (!$createAccount && $emailRegistered) {
+        // Check account credentials are valid
+        $accountDetails = json_encode(array(
+          'email' => _justgiving_wf_getSubmittedValue('jg_email', $form, $form_state),
+          'password' => _justgiving_wf_getSubmittedValue('jg_password', $form, $form_state),
+        ));
+        if (!$_justgiving_helper->client->Account->IsValidV2($accountDetails)) {
+          $errors[_justgiving_wf_getFieldName('jg_email')] = t('Justgiving username/password incorrect.');
+          $errors[_justgiving_wf_getFieldName('jg_password')] = t('Justgiving username/password incorrect.');
+        }
+      }
+      // If no errors, and account creation requested, create an account with justgiving
+      if (empty($errors)) {
+        $createAccount = _justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state);
+        if ($createAccount) {
+          $title = civicrm_api3('OptionValue', 'getsingle', array(
+            'return' => array("label"),
+            'option_group_id' => "individual_prefix",
+            'value' => _justgiving_wf_getSubmittedValue('jg_prefix', $form, $form_state),
+          ));
+          $createParams = array(
+            'title' => preg_replace('/[^[:alpha:]]/', '', $title['label']),
+            'firstName' => _justgiving_wf_getSubmittedValue('jg_firstname', $form, $form_state),
+            'lastName' => _justgiving_wf_getSubmittedValue('jg_lastname', $form, $form_state),
+            'Address' => array(
+              'line1' => _justgiving_wf_getSubmittedValue('jg_address1', $form, $form_state),
+              'townOrCity' => _justgiving_wf_getSubmittedValue('jg_city', $form, $form_state),
+              'country' => 'United Kingdom',
+              'postcodeOrZipcode' => _justgiving_wf_getSubmittedValue('jg_postcode', $form, $form_state),
+            ),
+            'email' => $email,
+            'password' => _justgiving_wf_getSubmittedValue('jg_password', $form, $form_state),
+            'acceptTermsAndConditions' => TRUE,
+          );
+          $httpResponse = $_justgiving_helper->accounts('create', $createParams);
+          if (($httpResponse->httpStatusCode !== 200) && (strpos($_justgiving_helper->settings['environment'], 'sandbox') === FALSE)) {
+              // We're not in sandbox mode so raise an error (sandbox account creation gives 503 on success!
+              $errors['submitted'] = (empty($httpResponse->bodyResponse->error->desc)) ? 'Could not create Justgiving Account' : $httpResponse->bodyResponse->error->desc;
+          }
+          else {
+            // Unset "create account" now we've created one!
+            _justgiving_wf_setSubmittedValue('jg_createaccount', 0, $form, $form_state);
+          }
+        }
+      }
+      break;
+  }
+  if (is_array($errors)) {
+      foreach ($errors as $field => $msg) {
+        form_set_error($field, $msg);
+      }
+  }
+}
+
+function _justgiving_wf_webform_getpreSaveValue($name, $node, $submission) {
+  foreach ($node->webform['components'] as $key => $element) {
+    if ($element['form_key'] == $name) {
+      return $submission->data[$key][0];
+    }
+  }
+}
+
+function _justgiving_wf_webform_setpreSaveValue($name, $value, $node, $submission) {
+  foreach ($node->webform['components'] as $key => $element) {
+    if ($element['form_key'] == $name) {
+      $submission->data[$key][0] = $value;
+    }
+  }
+}
+
+
+/**
+ * Implements hook_webform_submission_presave().
+ *
+ * Hooks in before saving to DB to allow JG processing.
+ */
+function justgiving_wf_webform_submission_presave($node, &$submission) {
+  global $_justgiving_helper;
+  justgiving_wf_get_jg_helper();
+
+  $errors = array();
+
+  switch ($submission->nid) {
+    case $_justgiving_helper->forms['page']:
+      // We've validated/created a justgiving account in form validation.  So we can go ahead here and create the page.
+      $newPageParams = array(
+        'charityId' => _justgiving_wf_webform_getpreSaveValue('jg_charityid', $node, $submission),
+        'eventId' => _justgiving_wf_webform_getpreSaveValue('jg_eventid', $node, $submission),
+        'charityOptIn' => FALSE,
+        'charityFunded' => FALSE,
+        'pageShortName' => _justgiving_wf_webform_getpreSaveValue('jg_shortname', $node, $submission),
+        'pageTitle' => _justgiving_wf_webform_getpreSaveValue('jg_pagetitle', $node, $submission),
+      );
+      if (_justgiving_wf_webform_getpreSaveValue('jg_pagestory', $node, $submission)) {
+        $newPageParams['pageStory'] = _justgiving_wf_webform_getpreSaveValue('jg_pagestory', $node, $submission);
+      }
+      if (_justgiving_wf_webform_getpreSaveValue('jg_targetamount', $node, $submission)) {
+        $newPageParams['targetAmount'] = _justgiving_wf_webform_getpreSaveValue('jg_targetamount', $node, $submission);
+      }
+
+      foreach ($submission->data as $key => $value) {
+        switch ($node->webform['components'][$key]['form_key']) {
+          // Unset the password so they are not store in the DB.
+          case 'jg_password':
+            _justgiving_wf_webform_setpreSaveValue('jg_password', '' ,$node, $submission);
+            break;
+        }
+      }
+      $jgCreate = $_justgiving_helper->pages('create', array(
+          'username' => _justgiving_wf_webform_getpreSaveValue('jg_email', $node, $submission),
+          'password' => _justgiving_wf_webform_getpreSaveValue('jg_password', $node, $submission),
+        ),
+        $newPageParams
+      );
+
+      if ($jgCreate->httpStatusCode !== 201) {
+        $err = !empty($jgCreate->bodyResponse->error->desc) ? $jgCreate->bodyResponse->error->desc : 'Unknown error';
+        $err .= ' (' . $jgCreate->httpStatusCode . ')';
+        $errors['submitted'] = 'Unable to create Justgiving page. ' . $err;
+      }
+      $apiParams = array(
+        'charity_id' => $newPageParams['charityId'],
+        'event_id' => $newPageParams['eventId'],
+        'charity_opt_in' => (int) $newPageParams['charityOptIn'],
+        'charity_funded' => (int) $newPageParams['charityFunded'],
+        'page_short_name' => $newPageParams['pageShortName'],
+        'page_title' => $newPageParams['pageTitle'],
+      );
+      if (!empty($newPageParams['pageStory'])) {
+        $apiParams['page_story'] = $newPageParams['pageStory'];
+      }
+      if (!empty($newPageParams['targetAmount'])) {
+        $apiParams['target_amount'] = $newPageParams['targetAmount'];
+      }
+      if (!empty($jgCreate->bodyResponse->pageId)) {
+        $apiParams['page_id'] = $jgCreate->bodyResponse->pageId;
+      }
+      if (!empty($err)) {
+        $apiParams['error'] = $err;
+      }
+      // Record page creation in Civi
+      civicrm_api3('JustgivingFundraisingpage', 'create', $apiParams);
+      break;
+  }
+  foreach ($errors as $field => $error) {
+    watchdog('justgiving', $field . ': ' . $error);
+  }
+}

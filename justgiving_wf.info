@@ -1,0 +1,9 @@
+name = Just Giving Webform Integration
+description = JustGiving Module using the JG PHP SDK
+core = 7.x
+
+files[php] = services/justgiving.php
+
+dependencies[] = webform
+dependencies[] = webform_validation
+dependencies[] = libraries (>=2)
