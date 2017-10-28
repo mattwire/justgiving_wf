@@ -43,9 +43,8 @@ function justgiving_wf_admin() {
         '#title' => 'Environment',
         '#default_value' => variable_get('justgiving_environment'),
         '#options' => array(
-          'https://api.sandbox.justgiving.com/' => t('Sandbox'),
-          'https://api.staging.justgiving.com/' => t('Staging'),
-          'https://api.justgiving.com/' => t('Live'),
+          'sandbox' => t('Sandbox'),
+          'live' => t('Live'),
           ),
         '#description' => t('The environment used for Just Giving integration'),
       ),

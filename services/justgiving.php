@@ -60,12 +60,18 @@ class JustGiving {
    */
   public function getSettings() {
     $this->settings = array(
-      'charity-id' => variable_get('justgiving_charity_id'),
       'api-key' => variable_get('justgiving_api_key'),
       'environment' => variable_get('justgiving_environment'),
     );
+    switch ($this->settings['environment']) {
+      case 'sandbox':
+        $this->settings['environment'] = 'https://api.sandbox.justgiving.com/';
+        break;
+      case 'live':
+        $this->settings['environment'] = 'https://api.justgiving.com/';
+        break;
+    }
     $this->forms = array(
-      'account' => variable_get('justgiving_node_account_form'),
       'page' => variable_get('justgiving_node_page_form'),
     );
   }
