@@ -211,6 +211,10 @@ function justgiving_wf_form_validate($form, &$form_state) {
   $errors = FALSE;
   switch ($formId) {
     case "webform_client_form_{$_justgiving_helper->forms['page']}":
+      if (empty(_justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state))) {
+        // Account fields must be on the same page of a multipage form, if a field not defined, assume we're on a different page.
+        return;
+      }
       // Validate justgiving account details
       $email = _justgiving_wf_getSubmittedValue('jg_email', $form ,$form_state);
       $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
@@ -257,6 +261,10 @@ function justgiving_wf_form_validate($form, &$form_state) {
             'password' => _justgiving_wf_getSubmittedValue('jg_password', $form, $form_state),
             'acceptTermsAndConditions' => TRUE,
           );
+
+          // TODO Add this function, pass errors by reference
+          //_justgiving_wf_paramIsValid('jg_firstname', $createParams['firstName'], $errors);
+
           $httpResponse = $_justgiving_helper->accounts('create', $createParams);
           if (($httpResponse->httpStatusCode !== 200) && (strpos($_justgiving_helper->settings['environment'], 'sandbox') === FALSE)) {
               // We're not in sandbox mode so raise an error (sandbox account creation gives 503 on success!

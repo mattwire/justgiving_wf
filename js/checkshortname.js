@@ -12,7 +12,7 @@
       datatype: "json",
       success: function (data, status) {
         var pageNames = $.parseJSON(data);
-        if (pageNames !== NULL) {
+        if (pageNames !== null) {
           $pageShortNameElement.val(pageNames[0]);
         }
       }
