@@ -20,12 +20,13 @@ This allows a webform to interact with the justgiving API.
     * ['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_city'] (textfield, required)
     * ['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_postal_code'] (textfield, required)
 1. Specify the following in the webform (for the justgiving page):
-    * 'jg_charityid' (int, required, hidden?)
-    * 'jg_eventid' (int, required, hidden?)
-    * 'jg_shortname' (textfield, required)
-    * 'jg_pagetitle' (textfield, required)
-    * 'jg_pagestory' (textarea, optional)
-    * 'jg_targetamount' (int, optional)
+    * ['jg_createpage'] (checkbox, optional)
+    * ['jg_pagefieldset']['jg_charityid'] (int, required, hidden?)
+    * ['jg_pagefieldset']['jg_eventid'] (int, required, hidden?)
+    * ['jg_pagefieldset']['jg_shortname'] (textfield, required)
+    * ['jg_pagefieldset']['jg_pagetitle'] (textfield, required)
+    * ['jg_pagefieldset']['jg_pagestory'] (textarea, optional)
+    * ['jg_pagefieldset']['jg_targetamount'] (int, optional)
 
 ## Credits
 Drupal module based on (https://www.drupal.org/sandbox/KrisPomphrey/2202035)
