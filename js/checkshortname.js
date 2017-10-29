@@ -45,9 +45,29 @@
     webformSubmit.attr('disabled', false);
   }
 
+  function getURLParameter(sParam) {
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) {
+      var sParameterName = sURLVariables[i].split('=');
+      if (sParameterName[0] === sParam) {
+        return sParameterName[1];
+      }
+    }
+  }
+
+  function selectCharity() {
+    var charityId = getURLParameter('charity_id');
+    if (charityId.length) {
+      $('#edit-submitted-jg-pagefieldset-jg-charityid option[value="' + charityId + '"]')
+        .attr('selected', 'selected');
+    }
+  }
+
   // On page load
   $(function() {
     updateJGShortName();
+    selectCharity();
 
     $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-first-name').focusout(function() {
       updateJGShortName();
