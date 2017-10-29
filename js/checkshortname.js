@@ -2,7 +2,7 @@
 (function($) {
 
   function checkJGShortName() {
-    var $pageShortNameElement = $('#edit-submitted-jg-shortname');
+    var $pageShortNameElement = $('#edit-submitted-jg-pagefieldset-jg-shortname');
     var getTemplateContentUrl = "/civicrm/ajax/rest?className=CRM_Justgiving_Page_AJAX&fnName=getPageShortNameSuggestions&json=1'}";
     $.ajax({
       url: getTemplateContentUrl,
@@ -20,7 +20,7 @@
   }
 
   function updateJGShortName() {
-    var jgShortName = $('#edit-submitted-jg-shortname');
+    var jgShortName = $('#edit-submitted-jg-pagefieldset-jg-shortname');
     var jgFirstName = $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-first-name');
     var jgLastName = $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-last-name');
     var webformSubmit = $('.webform-submit');
@@ -55,7 +55,7 @@
     $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-last-name').focusout(function() {
       updateJGShortName();
     });
-    $('#edit-submitted-jg-shortname').focusout(function() {
+    $('#edit-submitted-jg-pagefieldset-jg-shortname').focusout(function() {
       updateJGShortName();
     });
   });
