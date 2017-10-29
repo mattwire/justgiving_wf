@@ -101,33 +101,13 @@ function justgiving_wf_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implements hook_webform_validation_validators().
+ * This function retrieves the actual submitted value for the specified alias (only works for the current page)
+ * @param $name
+ * @param $form
+ * @param $form_state
  *
- * Add our custom validator for the JG url check
+ * @return null
  */
-function justgiving_wf_webform_validation_validators() {
-  return array(
-    'validate_jg_url' => array(
-      'name' => 'Just Giving pageShortName (URL) check',
-      'component_types' => array('textfield'),
-    ),
-    'validate_jg_email' => array(
-      'name' => 'Just Giving Email Check',
-      'component_types' => array(
-        'email',
-        'textfield',
-      ),
-    ),
-    'validate_jg_password' => array(
-      'name' => 'Just Giving Password Check',
-      'component_types' => array(
-        'textfield',
-        'password',
-      ),
-    ),
-  );
-}
-
 function _justgiving_wf_getSubmittedValue($name, $form, $form_state) {
   if (empty($form_state['values']['submitted'])) {
     return NULL;
@@ -136,34 +116,45 @@ function _justgiving_wf_getSubmittedValue($name, $form, $form_state) {
   switch ($name) {
     case 'jg_createaccount':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1];
-      break;
+    case 'jg_createpage':
+      return (empty($submitted['jg_createpage'][1])) ? NULL : $submitted['jg_createpage'][1];
     case 'jg_email':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'];
-      break;
     case 'jg_password':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_password'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_password'];
-      break;
     case 'jg_prefix':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_prefix_id'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_prefix_id'];
-      break;
     case 'jg_firstname':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_first_name'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_first_name'];
-      break;
     case 'jg_lastname':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_last_name'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_contact_last_name'];
-      break;
     case 'jg_address1':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_street_address'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_street_address'];
-      break;
     case 'jg_city':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_city'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_city'];
-      break;
     case 'jg_postcode':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_postal_code'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_address_postal_code'];
-      break;
+    case 'jg_charityid':
+      return (empty($submitted['jg_pagefieldset']['jg_charityid'])) ? NULL : $submitted['jg_pagefieldset']['jg_charityid'];
+    case 'jg_eventid':
+      return (empty($submitted['jg_pagefieldset']['jg_eventid'])) ? NULL : $submitted['jg_pagefieldset']['jg_eventid'];
+    case 'jg_shortname':
+      return (empty($submitted['jg_pagefieldset']['jg_shortname'])) ? NULL : $submitted['jg_pagefieldset']['jg_shortname'];
+    case 'jg_pagetitle':
+      return (empty($submitted['jg_pagefieldset']['jg_pagetitle'])) ? NULL : $submitted['jg_pagefieldset']['jg_pagetitle'];
   }
+  return NULL;
 }
 
+/**
+ * Set a submitted value (not sure if this actually has an effect)
+ * @param $name
+ * @param $value
+ * @param $form
+ * @param $form_state
+ *
+ * @return null
+ */
 function _justgiving_wf_setSubmittedValue($name, $value, $form, &$form_state) {
   if (empty($form_state['values']['submitted'])) {
     return NULL;
@@ -176,10 +167,18 @@ function _justgiving_wf_setSubmittedValue($name, $value, $form, &$form_state) {
   }
 }
 
+/**
+ * These are the fieldnames we need to get errors to show on the right field
+ * @param $name
+ *
+ * @return null|string
+ */
 function _justgiving_wf_getFieldName($name) {
   switch ($name) {
     case 'jg_createaccount':
       return 'submitted][civicrm_1_contact_1_fieldset_fieldset][jg_createaccount';
+    case 'jg_createpage':
+      return 'submitted][jg_createpage';
     case 'jg_email':
       return 'submitted][civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_email_email';
     case 'jg_password':
@@ -196,11 +195,77 @@ function _justgiving_wf_getFieldName($name) {
       return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_address_city';
     case 'jg_postcode':
       return 'submitted[civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_address_postal_code';
+    case 'jg_charityid':
+      return 'submitted[jg_pagefieldset][jg_charityid';
+    case 'jg_eventid':
+      return 'submitted[jg_pagefieldset][jg_eventid';
+    case 'jg_shortname':
+      return 'submitted[jg_pagefieldset][jg_shortname';
+    case 'jg_pagetitle':
+      return 'submitted[jg_pagefieldset][jg_pagetitle';
     default:
       return NULL;
   }
 }
 
+/**
+ * Validate fields required for Justgiving account and page.
+ * @param $createAccount
+ * @param $createPage
+ * @param $form
+ * @param $form_state
+ *
+ * @return bool
+ */
+function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form_state) {
+  $errors = array();
+  if ($createAccount) {
+    // createAccount requires:
+    $createAccountRequired = array(
+      'jg_prefix',
+      'jg_firstname',
+      'jg_lastname',
+      'jg_address1',
+      'jg_city',
+      'jg_postcode',
+      'jg_email',
+      'jg_password'
+    );
+    foreach ($createAccountRequired as $key) {
+      if (_justgiving_wf_getSubmittedValue($key, $form, $form_state) === NULL) {
+        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving account';
+      }
+    }
+  }
+
+  if ($createPage) {
+    // createPage requires:
+    $createPageRequired = array(
+      'jg_charityid',
+      'jg_eventid',
+      'jg_shortname',
+      'jg_pagetitle'
+    );
+    foreach ($createPageRequired as $key) {
+      if (_justgiving_wf_getSubmittedValue($key, $form, $form_state) === NULL) {
+        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving account';
+      }
+    }
+  }
+  if (is_array($errors)) {
+    foreach ($errors as $field => $msg) {
+      form_set_error($field, $msg);
+    }
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * This validates the webform, and creates the justgiving account if requested.
+ * @param $form
+ * @param $form_state
+ */
 function justgiving_wf_form_validate($form, &$form_state) {
   global $_justgiving_helper;
   justgiving_wf_get_jg_helper();
@@ -211,14 +276,24 @@ function justgiving_wf_form_validate($form, &$form_state) {
   $errors = FALSE;
   switch ($formId) {
     case "webform_client_form_{$_justgiving_helper->forms['page']}":
-      if (empty(_justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state))) {
-        // Account fields must be on the same page of a multipage form, if a field not defined, assume we're on a different page.
+      // If jg_createpage is empty, user doesn't want to create a page (no point creating account either)
+      $createPage = _justgiving_wf_getSubmittedValue('jg_createpage', $form, $form_state);
+      if (empty($createPage)) {
         return;
       }
+
+      // If jg_createaccount is NULL, assume we are not creating/using a justgiving account
+      $createAccount = _justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state);
+
+      // Validate that all required fields are valid
+      if (!_justgiving_wf_validateFields($createAccount, $createPage, $form, $form_state)) {
+        return;
+      }
+
       // Validate justgiving account details
       $email = _justgiving_wf_getSubmittedValue('jg_email', $form ,$form_state);
       $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
-      $createAccount = _justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state);
+
       // Check if account is registered, and if we requested to create account
       if ($createAccount && $emailRegistered) {
         $errors[_justgiving_wf_getFieldName('jg_email')] = t('%d is already registered with JustGiving', array('%d' => $email));
@@ -261,9 +336,6 @@ function justgiving_wf_form_validate($form, &$form_state) {
             'password' => _justgiving_wf_getSubmittedValue('jg_password', $form, $form_state),
             'acceptTermsAndConditions' => TRUE,
           );
-
-          // TODO Add this function, pass errors by reference
-          //_justgiving_wf_paramIsValid('jg_firstname', $createParams['firstName'], $errors);
 
           $httpResponse = $_justgiving_helper->accounts('create', $createParams);
           if (($httpResponse->httpStatusCode !== 200) && (strpos($_justgiving_helper->settings['environment'], 'sandbox') === FALSE)) {
@@ -315,6 +387,10 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
 
   switch ($submission->nid) {
     case $_justgiving_helper->forms['page']:
+      // Check if user wanted to create a page.
+      if (!_justgiving_wf_webform_getpreSaveValue('jg_createpage', $node, $submission)) {
+        return;
+      }
       // We've validated/created a justgiving account in form validation.  So we can go ahead here and create the page.
       $newPageParams = array(
         'charityId' => _justgiving_wf_webform_getpreSaveValue('jg_charityid', $node, $submission),
