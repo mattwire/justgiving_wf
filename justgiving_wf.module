@@ -334,7 +334,6 @@ function justgiving_wf_form_validate($form, &$form_state) {
         $errors['charity_id'] = 'You must specify the JustGiving Charity ID in the request (charity_id=).';
       }
 
-      watchdog('justgiving_wf', print_r($_justgiving_helper->session['submitted'], TRUE));
       // If jg_createpage is empty, user doesn't want to create a page (no point creating account either)
       $createPage = $_justgiving_helper->session['submitted']['jg_createpage'];
       if (empty($createPage)) {
@@ -488,6 +487,7 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
         }
       }
 
+      watchdog('justgiving_wf', 'JustGiving Page Create response: ' . print_r($jgCreate, TRUE));
       // Check the result of the page creation request
       if ($jgCreate->httpStatusCode !== 201) {
         if (!empty($jgCreate->bodyResponse->error->desc)) {
@@ -529,8 +529,10 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
       civicrm_api3('JustgivingFundraisingpage', 'create', $apiParams);
       break;
   }
-  foreach ($errors as $field => $error) {
-    watchdog('justgiving', $field . ': ' . $error);
-    drupal_set_message($error, 'error');
+  if (count($errors) > 0) {
+    watchdog('justgiving_wf', 'Errors on submit' . print_r($errors, TRUE));
+    foreach ($errors as $field => $error) {
+      drupal_set_message($error, 'error');
+    }
   }
 }
