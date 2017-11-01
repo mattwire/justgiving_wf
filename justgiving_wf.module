@@ -233,7 +233,7 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
     );
     foreach ($createAccountRequired as $key) {
       if (_justgiving_wf_getSubmittedValue($key, $form, $form_state) === NULL) {
-        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving account';
+        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving Account';
       }
     }
   }
@@ -248,7 +248,7 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
     );
     foreach ($createPageRequired as $key) {
       if (_justgiving_wf_getSubmittedValue($key, $form, $form_state) === NULL) {
-        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving account';
+        $errors[_justgiving_wf_getFieldName($key)] = 'This field is required to create a JustGiving Page';
       }
     }
   }
