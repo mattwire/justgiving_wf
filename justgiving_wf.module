@@ -11,13 +11,15 @@ if (!function_exists('libraries_load')) {
   module_load_include('module', 'libraries');
 }
 
-require_once('services/justgiving.php');
+
+
 
 function justgiving_wf_get_jg_helper() {
   $jg_lib_path = function_exists('libraries_get_path') ? libraries_get_path('justgiving') : 'sites/all/libraries/justgiving';
   $jg_platform = $jg_lib_path . '/JustGivingClient.php';
 
   require_once($jg_platform);
+  require_once(drupal_get_path('module', 'justgiving_wf') . '/services/justgiving.php');
 
   // Create our helper global.
   global $_justgiving_helper;
