@@ -251,7 +251,7 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
   if ($createPage && ($form_state['webform']['page_num'] == 2)) {
     // createPage requires:
     $createPageRequired = array(
-      'jg_charityid',
+      //'jg_charityid', Now passed via URL
       'jg_eventid',
       'jg_shortname',
       'jg_pagetitle'
