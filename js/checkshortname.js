@@ -58,7 +58,7 @@
 
   function selectCharity() {
     var charityId = getURLParameter('charity_id');
-    if (charityId.length) {
+    if (charityId) {
       $('#edit-submitted-jg-pagefieldset-jg-charityid option[value="' + charityId + '"]')
         .attr('selected', 'selected');
     }
@@ -66,9 +66,6 @@
 
   // On page load
   $(function() {
-    updateJGShortName();
-    selectCharity();
-
     $('#edit-submitted-civicrm-1-contact-1-fieldset-fieldset-civicrm-1-contact-1-contact-first-name').focusout(function() {
       updateJGShortName();
     });
@@ -78,6 +75,9 @@
     $('#edit-submitted-jg-pagefieldset-jg-shortname').focusout(function() {
       updateJGShortName();
     });
+
+    updateJGShortName();
+    selectCharity();
   });
 
 })(jQuery);

@@ -95,6 +95,16 @@ function justgiving_wf_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case "webform_client_form_{$_justgiving_helper->forms['page']}":
       drupal_add_js(drupal_get_path('module', 'justgiving_wf') . '/js/checkshortname.js');
+
+      // Try and set a default value for page shortname
+      if ($form_state['webform']['page_num'] == 2) {
+        if (!empty($_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_first_name'])
+          && (!empty($_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_last_name']))) {
+          $form['submitted']['jg_pagefieldset']['jg_shortname']['#default_value'] =
+            $_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_first_name']
+            . $_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_last_name'];
+        }
+      }
       $form['#validate'][] = 'justgiving_wf_form_validate'; //function name
       break;
   }
@@ -219,7 +229,7 @@ function _justgiving_wf_getFieldName($name) {
  */
 function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form_state) {
   $errors = array();
-  if ($createAccount) {
+  if ($createAccount && ($form_state['webform']['page_num'] == 1)) {
     // createAccount requires:
     $createAccountRequired = array(
       'jg_prefix',
@@ -238,7 +248,7 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
     }
   }
 
-  if ($createPage) {
+  if ($createPage && ($form_state['webform']['page_num'] == 2)) {
     // createPage requires:
     $createPageRequired = array(
       'jg_charityid',
@@ -252,13 +262,49 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
       }
     }
   }
-  if (is_array($errors)) {
+  if (is_array($errors) && (count($errors) > 0)) {
     foreach ($errors as $field => $msg) {
       form_set_error($field, $msg);
     }
     return FALSE;
   }
   return TRUE;
+}
+
+function _justgiving_wf_isFieldset($key, $form_state) {
+  if (empty($form_state['webform']['component_tree']['children'])) {
+    return FALSE;
+  }
+  foreach ($form_state['webform']['component_tree']['children'] as $componentId => $value) {
+    if ((!empty($value['form_key'] && ($value['form_key'] == $key))) && !empty($value['type']) && ($value['type'] == 'fieldset')) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function _justgiving_wf_saveSubmittedValues($values, $form_state) {
+  global $_justgiving_helper;
+  justgiving_wf_get_jg_helper();
+
+  if (!empty($values)) {
+    foreach ($values as $key => $value) {
+      if (_justgiving_wf_isFieldSet($key, $form_state)) {
+        _justgiving_wf_saveSubmittedValues($value, $form_state);
+      }
+      else {
+        switch ($key) {
+          case 'jg_createaccount':
+          case 'jg_createpage':
+            // Special case, as these are checkboxes, use the first array index (ie. first checkbox value)
+            $_justgiving_helper->session['submitted'][$key] = reset($value);
+            break;
+          default:
+            $_justgiving_helper->session['submitted'][$key] = $value;
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -276,22 +322,40 @@ function justgiving_wf_form_validate($form, &$form_state) {
   $errors = FALSE;
   switch ($formId) {
     case "webform_client_form_{$_justgiving_helper->forms['page']}":
+      // Save values from this page in session
+      if (!empty($form_state['values']['submitted'])) {
+        _justgiving_wf_saveSubmittedValues($form_state['values']['submitted'], $form_state);
+      }
+      // Save charity_id from URL
+      if (!empty($_REQUEST['charity_id'])) {
+        $_justgiving_helper->session['submitted']['charity_id'] = (int) $_REQUEST['charity_id'];
+      }
+      else {
+        $errors['charity_id'] = 'You must specify the JustGiving Charity ID in the request (charity_id=).';
+      }
+
+      watchdog('justgiving_wf', print_r($_justgiving_helper->session['submitted'], TRUE));
       // If jg_createpage is empty, user doesn't want to create a page (no point creating account either)
-      $createPage = _justgiving_wf_getSubmittedValue('jg_createpage', $form, $form_state);
+      $createPage = $_justgiving_helper->session['submitted']['jg_createpage'];
       if (empty($createPage)) {
         return;
       }
 
       // If jg_createaccount is NULL, assume we are not creating/using a justgiving account
-      $createAccount = _justgiving_wf_getSubmittedValue('jg_createaccount', $form, $form_state);
+      $createAccount = $_justgiving_helper->session['submitted']['jg_createaccount'];
 
       // Validate that all required fields are valid
       if (!_justgiving_wf_validateFields($createAccount, $createPage, $form, $form_state)) {
         return;
       }
 
+      // Only create account on first page submission
+      if ($form_state['webform']['page_num'] !== 1) {
+        return;
+      }
+
       // Validate justgiving account details
-      $email = _justgiving_wf_getSubmittedValue('jg_email', $form ,$form_state);
+      $email = _justgiving_wf_getSubmittedValue('jg_email', $form, $form_state);
       $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
 
       // Check if account is registered, and if we requested to create account
@@ -339,18 +403,19 @@ function justgiving_wf_form_validate($form, &$form_state) {
 
           $httpResponse = $_justgiving_helper->accounts('create', $createParams);
           if (($httpResponse->httpStatusCode !== 200) && (strpos($_justgiving_helper->settings['environment'], 'sandbox') === FALSE)) {
-              // We're not in sandbox mode so raise an error (sandbox account creation gives 503 on success!
-              $errors['submitted'] = (empty($httpResponse->bodyResponse->error->desc)) ? 'Could not create Justgiving Account' : $httpResponse->bodyResponse->error->desc;
+            // We're not in sandbox mode so raise an error (sandbox account creation gives 503 on success!
+            $errors['submitted'] = (empty($httpResponse->bodyResponse->error->desc)) ? 'Could not create Justgiving Account' : $httpResponse->bodyResponse->error->desc;
           }
           else {
             // Unset "create account" now we've created one!
             _justgiving_wf_setSubmittedValue('jg_createaccount', 0, $form, $form_state);
+            drupal_set_message(t('A JustGiving Account was created.  You should receive an email from JustGiving shortly.'), 'status');
           }
         }
       }
       break;
   }
-  if (is_array($errors)) {
+  if (is_array($errors) && (count($errors) > 0)) {
       foreach ($errors as $field => $msg) {
         form_set_error($field, $msg);
       }
@@ -388,12 +453,12 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
   switch ($submission->nid) {
     case $_justgiving_helper->forms['page']:
       // Check if user wanted to create a page.
-      if (!_justgiving_wf_webform_getpreSaveValue('jg_createpage', $node, $submission)) {
+      if (empty($_justgiving_helper->session['submitted']['jg_createpage'])) {
         return;
       }
       // We've validated/created a justgiving account in form validation.  So we can go ahead here and create the page.
       $newPageParams = array(
-        'charityId' => _justgiving_wf_webform_getpreSaveValue('jg_charityid', $node, $submission),
+        'charityId' => $_justgiving_helper->session['submitted']['charity_id'],
         'eventId' => _justgiving_wf_webform_getpreSaveValue('jg_eventid', $node, $submission),
         'charityOptIn' => FALSE,
         'charityFunded' => FALSE,
@@ -407,6 +472,13 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
         $newPageParams['targetAmount'] = _justgiving_wf_webform_getpreSaveValue('jg_targetamount', $node, $submission);
       }
 
+      $authParams = array(
+        'username' => $_justgiving_helper->session['submitted']['civicrm_1_contact_1_email_email'],
+        'password' => $_justgiving_helper->session['submitted']['jg_password'],
+      );
+      $jgCreate = $_justgiving_helper->pages('create', $authParams, $newPageParams);
+
+      // Unset the password field so we don't save it
       foreach ($submission->data as $key => $value) {
         switch ($node->webform['components'][$key]['form_key']) {
           // Unset the password so they are not store in the DB.
@@ -415,17 +487,23 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
             break;
         }
       }
-      $jgCreate = $_justgiving_helper->pages('create', array(
-          'username' => _justgiving_wf_webform_getpreSaveValue('jg_email', $node, $submission),
-          'password' => _justgiving_wf_webform_getpreSaveValue('jg_password', $node, $submission),
-        ),
-        $newPageParams
-      );
 
+      // Check the result of the page creation request
       if ($jgCreate->httpStatusCode !== 201) {
-        $err = !empty($jgCreate->bodyResponse->error->desc) ? $jgCreate->bodyResponse->error->desc : 'Unknown error';
+        if (!empty($jgCreate->bodyResponse->error->desc)) {
+          $err = $jgCreate->bodyResponse->error->desc;
+        }
+        elseif (!empty($jgCreate->bodyResponse[0]->desc)) {
+          $err = $jgCreate->bodyResponse[0]->desc;
+        }
+        else {
+          $err = 'Unknown error';
+        }
         $err .= ' (' . $jgCreate->httpStatusCode . ')';
         $errors['submitted'] = 'Unable to create Justgiving page. ' . $err;
+      }
+      else {
+        drupal_set_message('A JustGiving Page was created.');
       }
       $apiParams = array(
         'charity_id' => $newPageParams['charityId'],
@@ -453,5 +531,6 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
   }
   foreach ($errors as $field => $error) {
     watchdog('justgiving', $field . ': ' . $error);
+    drupal_set_message($error, 'error');
   }
 }
