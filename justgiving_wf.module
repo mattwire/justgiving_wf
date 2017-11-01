@@ -117,7 +117,7 @@ function _justgiving_wf_getSubmittedValue($name, $form, $form_state) {
     case 'jg_createaccount':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createaccount'][1];
     case 'jg_createpage':
-      return (empty($submitted['jg_createpage'][1])) ? NULL : $submitted['jg_createpage'][1];
+      return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createpage'][1])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['jg_createpage'][1];
     case 'jg_email':
       return (empty($submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'])) ? NULL : $submitted['civicrm_1_contact_1_fieldset_fieldset']['civicrm_1_contact_1_email_email'];
     case 'jg_password':
@@ -178,7 +178,7 @@ function _justgiving_wf_getFieldName($name) {
     case 'jg_createaccount':
       return 'submitted][civicrm_1_contact_1_fieldset_fieldset][jg_createaccount';
     case 'jg_createpage':
-      return 'submitted][jg_createpage';
+      return 'submitted][civicrm_1_contact_1_fieldset_fieldset][jg_createpage';
     case 'jg_email':
       return 'submitted][civicrm_1_contact_1_fieldset_fieldset][civicrm_1_contact_1_email_email';
     case 'jg_password':
