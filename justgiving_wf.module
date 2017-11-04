@@ -617,4 +617,5 @@ function _justgiving_wf_webform_addToGroup($params) {
     'group_id' => $groupId,
     'contact_id' => $contact['id'],
   ));
+  watchdog('justgiving_wf', 'groupContact: ' . print_r($groupContact, TRUE));
 }
