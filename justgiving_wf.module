@@ -616,7 +616,7 @@ function _justgiving_wf_webform_addToGroup($params) {
     $groupId = $groupMap[$params['charity_id']];
   }
   else {
-    return;
+    $groupId = 102; // Default abseiler group
   }
 
   // Add contact to group
