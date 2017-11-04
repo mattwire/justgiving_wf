@@ -543,3 +543,78 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
     }
   }
 }
+
+/**
+ * Implementation of hook_webform_submission_insert
+ *
+ * @param $node
+ * @param $submission
+ */
+function justgiving_wf_webform_webform_submission_insert($node, $submission) {
+  global $_justgiving_helper;
+  justgiving_wf_get_jg_helper();
+
+  switch ($submission->nid) {
+    case $_justgiving_helper->forms['page']:
+      // We just submitted the abseil webform, add the contact to group
+      if (empty($_justgiving_helper->session['submitted']['charity_id'])) {
+        watchdog('justgiving_wf', 'No charity_id defined', WATCHDOG_ERROR);
+        return;
+      }
+      if (empty($_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_first_name'])) {
+        watchdog('justgiving_wf', 'No first name defined', WATCHDOG_ERROR);
+        return;
+      }
+      if (empty($_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_last_name'])) {
+        watchdog('justgiving_wf', 'No last name defined', WATCHDOG_ERROR);
+        return;
+      }
+      if (empty($_justgiving_helper->session['submitted']['civicrm_1_contact_1_email_email'])) {
+        watchdog('justgiving_wf', 'No email defined', WATCHDOG_ERROR);
+        return;
+      }
+      $params['charity_id'] = $_justgiving_helper->session['submitted']['charity_id'];
+      $params['firstname'] = $_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_first_name'];
+      $params['lastname'] = $_justgiving_helper->session['submitted']['civicrm_1_contact_1_contact_last_name'];
+      $params['email'] = $_justgiving_helper->session['submitted']['civicrm_1_contact_1_email_email'];
+      _justgiving_wf_webform_addToGroup($params);
+      break;
+  }
+}
+
+/**
+ * Add to group. Params are firstname,lastname,email,charity_id
+ * @param $params
+ */
+function _justgiving_wf_webform_addToGroup($params) {
+  civicrm_initialize();
+
+  // Get Contact for webform we just submitted
+  try {
+    $contact = civicrm_api3('Contact', 'getsingle', $params);
+  }
+  catch (Exception $e) {
+    watchdog('justgiving_wf', 'Could not find contact record', WATCHDOG_ERROR);
+    return;
+  }
+
+  // The map of Justgiving charity_id => CiviCRM "participant" Group
+  $groupMap = array(
+    168132 => 99, // Edinburgh Children's Hospital Charity
+    2367233 => 100, // The Yard
+  );
+
+  // Get the group Id that maps to charity
+  if (array_key_exists($params['charity_id'], $groupMap)) {
+    $groupId = $groupMap[$params['charity_id']];
+  }
+  else {
+    return;
+  }
+
+  // Add contact to group
+  $groupContact = civicrm_api3('GroupContact', 'create', array(
+    'group_id' => $groupId,
+    'contact_id' => $contact['id'],
+  ));
+}
