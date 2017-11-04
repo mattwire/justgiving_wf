@@ -505,7 +505,12 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
         $errors['submitted'] = 'Unable to create Justgiving page. ' . $err;
       }
       else {
-        drupal_set_message('A JustGiving Page was created.');
+        // Page created successfully - present message to user with a clickable link
+        $msg = 'Congratulations! Your JustGiving Page was created and you will shortly receive an email from Justgiving.';
+        if (!empty($jgCreate->bodyResponse->signOnUrl) && !empty($jgCreate->bodyResponse->next->uri)) {
+          $msg .= '<br/>To view your page on JustGiving use this link: <a href="'. $jgCreate->bodyResponse->signOnUrl .'">'.$jgCreate->bodyResponse->next->uri.'</a>';
+        }
+        drupal_set_message($msg);
       }
       $apiParams = array(
         'charity_id' => $newPageParams['charityId'],
