@@ -357,7 +357,14 @@ function justgiving_wf_form_validate($form, &$form_state) {
 
       // Validate justgiving account details
       $email = _justgiving_wf_getSubmittedValue('jg_email', $form, $form_state);
-      $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
+      try {
+        $emailRegistered = $_justgiving_helper->client->Account->IsEmailRegistered($email);
+      }
+      catch (Exception $e) {
+        watchdog('justgiving_wf', 'IsEmailRegistered Exception' . $e->getMessage());
+        form_set_error(_justgiving_wf_getFieldName('jg_email'), 'Unable to verify email address with JustGiving.  Please try again!');
+        return;
+      }
 
       // Check if account is registered, and if we requested to create account
       if ($createAccount && $emailRegistered) {
