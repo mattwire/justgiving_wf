@@ -557,7 +557,7 @@ function justgiving_wf_webform_submission_presave($node, &$submission) {
  * @param $node
  * @param $submission
  */
-function justgiving_wf_webform_webform_submission_insert($node, $submission) {
+function justgiving_wf_webform_submission_insert($node, $submission) {
   global $_justgiving_helper;
   justgiving_wf_get_jg_helper();
 
