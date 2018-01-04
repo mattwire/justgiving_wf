@@ -607,8 +607,26 @@ function _justgiving_wf_webform_addToGroup($params) {
 
   // The map of Justgiving charity_id => CiviCRM "participant" Group
   $groupMap = array(
-    168132 => 99, // Edinburgh Children's Hospital Charity
-    2367233 => 100, // The Yard
+    11119 => 104, // Age Scotland
+    2327 => 105, // Alzheimer Scotland
+    2448850 => 106, // Craigies Education and Environment Project SCIO
+    11349 => 109, // CHAS
+    2367 => 108, // Children 1st
+    183178 => 110, // Crossreach
+    320 => 111, // Cystic Fibrosis Trust
+    168132 => 99, // Edinburgh Children’s Hospital Charity
+    185854 => 112, // Kirkliston Scouts
+    2116 => 113, // Macmillan Cancer Support
+    11233 => 114, // Parkinson's UK in Scotland
+    183007 => 115, // ProjectScotland
+    2451957 => 116, // QCCC
+    182055 => 117, // St Andrew's Hospice
+    190325 => 118, // St Columba's Hospice
+    246611 => 119, // Strathcarron Hospice
+    185854 => 107, // The Rotary Club of South Queensferry
+    186311 => 100, // The Yard
+    185854 => 120, // Tom Thumb Nursery
+    167956 => 121, // VOCAL
   );
 
   // Get the group Id that maps to charity
