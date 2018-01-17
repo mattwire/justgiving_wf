@@ -615,7 +615,7 @@ function _justgiving_wf_webform_addToGroup($params) {
     183178 => 110, // Crossreach
     320 => 111, // Cystic Fibrosis Trust
     168132 => 99, // Edinburgh Children’s Hospital Charity
-    185854 => 112, // Kirkliston Scouts
+//    185854 => 112, // Kirkliston Scouts
     2116 => 113, // Macmillan Cancer Support
     11233 => 114, // Parkinson's UK in Scotland
     183007 => 115, // ProjectScotland
@@ -625,7 +625,7 @@ function _justgiving_wf_webform_addToGroup($params) {
     246611 => 119, // Strathcarron Hospice
     185854 => 107, // The Rotary Club of South Queensferry
     186311 => 100, // The Yard
-    185854 => 120, // Tom Thumb Nursery
+//    185854 => 120, // Tom Thumb Nursery
     167956 => 121, // VOCAL
   );
 
@@ -637,10 +637,15 @@ function _justgiving_wf_webform_addToGroup($params) {
     $groupId = 102; // Default abseiler group
   }
 
-  // Add contact to group
-  $groupContact = civicrm_api3('GroupContact', 'create', array(
+  watchdog('justgiving_wf', 'addToGroupParams: ' . print_r($params, TRUE));
+
+  $groupContactParams = array(
     'group_id' => $groupId,
     'contact_id' => $contact['id'],
-  ));
-  watchdog('justgiving_wf', 'groupContact: ' . print_r($groupContact, TRUE));
+  );
+  watchdog('justgiving_wf', 'groupContactParams: ' . print_r($groupContactParams, TRUE));
+
+  // Add contact to group
+  $groupContactResult = civicrm_api3('GroupContact', 'create', $groupContactParams);
+  watchdog('justgiving_wf', 'groupContactResult: ' . print_r($groupContactResult, TRUE));
 }
