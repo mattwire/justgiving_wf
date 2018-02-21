@@ -299,7 +299,10 @@ function _justgiving_wf_saveSubmittedValues($values, $form_state) {
           case 'jg_createaccount':
           case 'jg_createpage':
             // Special case, as these are checkboxes, use the first array index (ie. first checkbox value)
-            $_justgiving_helper->session['submitted'][$key] = reset($value);
+            $_justgiving_helper->session['submitted'][$key] = 0;
+            if (!empty($value) && (count($value) > 0)) {
+              $_justgiving_helper->session['submitted'][$key] = reset($value);
+            }
             break;
           default:
             $_justgiving_helper->session['submitted'][$key] = $value;
@@ -313,6 +316,8 @@ function _justgiving_wf_saveSubmittedValues($values, $form_state) {
  * This validates the webform, and creates the justgiving account if requested.
  * @param $form
  * @param $form_state
+ *
+ * @throws \CiviCRM_API3_Exception
  */
 function justgiving_wf_form_validate($form, &$form_state) {
   global $_justgiving_helper;
