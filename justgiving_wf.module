@@ -238,26 +238,27 @@ function _justgiving_wf_validateFields($createAccount, $createPage, $form, $form
   return TRUE;
 }
 
-function _justgiving_wf_isFieldset($key, $form_state) {
-  if (empty($form_state['webform']['component_tree']['children'])) {
+function _justgiving_wf_isFieldset($key, $component_tree) {
+  if (empty($component_tree['children'])) {
     return FALSE;
   }
-  foreach ($form_state['webform']['component_tree']['children'] as $componentId => $value) {
-    if ((!empty($value['form_key'] && ($value['form_key'] == $key))) && !empty($value['type']) && ($value['type'] == 'fieldset')) {
-      return TRUE;
+  foreach ($component_tree['children'] as $componentId => $value) {
+    if ((!empty($value['form_key'] && ($value['form_key'] == $key))) && !empty($value['type']) && (in_array($value['type'], ['fieldset', 'layout_box']))) {
+      return $component_tree['children'][$componentId];
     }
   }
   return FALSE;
 }
 
-function _justgiving_wf_saveSubmittedValues($values, $form_state) {
+function _justgiving_wf_saveSubmittedValues($values, $component_tree) {
   global $_justgiving_helper;
   justgiving_wf_get_jg_helper();
 
   if (!empty($values)) {
     foreach ($values as $key => $value) {
-      if (_justgiving_wf_isFieldSet($key, $form_state)) {
-        _justgiving_wf_saveSubmittedValues($value, $form_state);
+      $fieldset = _justgiving_wf_isFieldSet($key, $component_tree);
+      if ($fieldset) {
+        _justgiving_wf_saveSubmittedValues($value, $fieldset);
       }
       else {
         switch ($key) {
@@ -296,7 +297,7 @@ function justgiving_wf_form_validate($form, &$form_state) {
     case "webform_client_form_{$_justgiving_helper->forms['page']}":
       // Save values from this page in session
       if (!empty($form_state['values']['submitted'])) {
-        _justgiving_wf_saveSubmittedValues($form_state['values']['submitted'], $form_state);
+        _justgiving_wf_saveSubmittedValues($form_state['values']['submitted'], $form_state['webform']['component_tree']);
       }
       // Save charity_id from URL
       if (!empty($_REQUEST['charity_id'])) {
