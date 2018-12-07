@@ -612,26 +612,28 @@ function _justgiving_wf_webform_addToGroup($params) {
 
   // The map of Justgiving charity_id => CiviCRM "participant" Group
   $groupMap = array(
-    11119 => 104, // Age Scotland
-    2327 => 105, // Alzheimer Scotland
-    2448850 => 106, // Craigies Education and Environment Project SCIO
-    11349 => 109, // CHAS
-    2367 => 108, // Children 1st
-    183178 => 110, // Crossreach
-    320 => 111, // Cystic Fibrosis Trust
-    168132 => 99, // Edinburgh Children’s Hospital Charity
+    11119 => 134, // Age Scotland
+    2327 => 136, // Alzheimer Scotland
+    185854 => 160, // Army Cadet Force
+    182003 => 159,  // Brain Tumour Charity
+    2448850 => 155, // Craigies Education and Environment Project SCIO
+    11349 => 140, // CHAS
+    2367 => 142, // Children 1st
+    183178 => 145, // Crossreach
+    320 => 137, // Cystic Fibrosis Trust
+    168132 => 146, // Edinburgh Children’s Hospital Charity
 //    185854 => 112, // Kirkliston Scouts
-    2116 => 113, // Macmillan Cancer Support
-    11233 => 114, // Parkinson's UK in Scotland
-    183007 => 115, // ProjectScotland
-    2451957 => 116, // QCCC
-    182055 => 117, // St Andrew's Hospice
-    190325 => 118, // St Columba's Hospice
-    246611 => 119, // Strathcarron Hospice
-    185854 => 107, // The Rotary Club of South Queensferry
-    186311 => 100, // The Yard
+    2116 => 147, // Macmillan Cancer Support
+    11233 => 139, // Parkinson's UK in Scotland
+    183007 => 158, // ProjectScotland
+    2451957 => 141, // QCCC
+    182055 => 144, // St Andrew's Hospice
+    190325 => 143, // St Columba's Hospice
+    246611 => 148, // Strathcarron Hospice
+ //   185854 => 107, // The Rotary Club of South Queensferry
+    186311 => 138, // The Yard
 //    185854 => 120, // Tom Thumb Nursery
-    167956 => 121, // VOCAL
+    167956 => 156, // VOCAL
   );
 
   // Get the group Id that maps to charity
@@ -639,7 +641,7 @@ function _justgiving_wf_webform_addToGroup($params) {
     $groupId = $groupMap[$params['charity_id']];
   }
   else {
-    $groupId = 102; // Default abseiler group
+    $groupId = 146; // Default abseiler group
   }
 
   watchdog('justgiving_wf', 'addToGroupParams: ' . print_r($params, TRUE));
